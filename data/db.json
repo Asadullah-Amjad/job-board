@@ -1,0 +1,180 @@
+{
+  "users": [
+    {
+      "id": "9966327f-5b81-4d19-999e-a57ac4f401a1",
+      "name": "JobHive Admin",
+      "email": "admin@jobhive.com",
+      "passwordHash": "6ff8bde3e01fbfe09acdeb7d803e616c:a88d65b53f1cfe0cbdded4e371e0c04f60d0c1cb18280e19095b21c0eae8288f65f4aea151fa0663ada9c8e310d654d586e5c4f9a3327d1a646cecf0b4d3161c",
+      "role": "admin",
+      "createdAt": "2026-09-22T12:54:51.476Z"
+    }
+  ],
+  "categories": [
+    {
+      "slug": "plumber",
+      "name": "Plumber"
+    },
+    {
+      "slug": "car-driver",
+      "name": "Car Driver"
+    },
+    {
+      "slug": "computer-operator",
+      "name": "Computer Operator"
+    },
+    {
+      "slug": "electrician",
+      "name": "Electrician"
+    },
+    {
+      "slug": "security-guard",
+      "name": "Security Guard"
+    },
+    {
+      "slug": "office-boy",
+      "name": "Office Boy"
+    },
+    {
+      "slug": "healthcare",
+      "name": "Healthcare"
+    },
+    {
+      "slug": "teaching",
+      "name": "Teaching"
+    },
+    {
+      "slug": "technician",
+      "name": "Technician"
+    },
+    {
+      "slug": "others",
+      "name": "Others"
+    }
+  ],
+  "jobs": [
+    {
+      "id": "a54f637b-8a37-4ceb-adcd-8b12c3a46c4d",
+      "slug": "plumber-abc-construction",
+      "title": "Plumber",
+      "company": "ABC Construction",
+      "location": "Lahore, Pakistan",
+      "type": "Full Time",
+      "salaryMin": 25000,
+      "salaryMax": 35000,
+      "categorySlug": "plumber",
+      "description": "ABC Construction is looking for a reliable Plumber to join our team in Lahore, Pakistan.\n\nYou will work with our supervisor, follow safety rules and complete daily tasks on time. Training is provided to the right candidate.",
+      "requirements": "Minimum 1 year experience\nHonest and punctual\nAble to work in shifts\nBasic communication skills",
+      "status": "open",
+      "createdAt": "2026-10-21T12:54:51.347Z"
+    },
+    {
+      "id": "64c97122-0ab1-4907-b68e-af09971ffca2",
+      "slug": "car-driver-city-transport-co",
+      "title": "Car Driver",
+      "company": "City Transport Co.",
+      "location": "Karachi, Pakistan",
+      "type": "Full Time",
+      "salaryMin": 30000,
+      "salaryMax": 40000,
+      "categorySlug": "car-driver",
+      "description": "City Transport Co. is looking for a reliable Car Driver to join our team in Karachi, Pakistan.\n\nYou will work with our supervisor, follow safety rules and complete daily tasks on time. Training is provided to the right candidate.",
+      "requirements": "Minimum 1 year experience\nHonest and punctual\nAble to work in shifts\nBasic communication skills",
+      "status": "open",
+      "createdAt": "2026-10-20T12:54:51.348Z"
+    },
+    {
+      "id": "35570cd3-7d4b-43b4-af0b-9ade8774aa6e",
+      "slug": "computer-operator-tech-solutions",
+      "title": "Computer Operator",
+      "company": "Tech Solutions",
+      "location": "Islamabad, Pakistan",
+      "type": "Full Time",
+      "salaryMin": 35000,
+      "salaryMax": 50000,
+      "categorySlug": "computer-operator",
+      "description": "Tech Solutions is looking for a reliable Computer Operator to join our team in Islamabad, Pakistan.\n\nYou will work with our supervisor, follow safety rules and complete daily tasks on time. Training is provided to the right candidate.",
+      "requirements": "Minimum 1 year experience\nHonest and punctual\nAble to work in shifts\nBasic communication skills",
+      "status": "open",
+      "createdAt": "2026-10-19T12:54:51.348Z"
+    },
+    {
+      "id": "60734a8c-dfc3-4a34-8228-4d47e8dde7c1",
+      "slug": "office-boy-global-enterprises",
+      "title": "Office Boy",
+      "company": "Global Enterprises",
+      "location": "Lahore, Pakistan",
+      "type": "Part Time",
+      "salaryMin": 18000,
+      "salaryMax": 25000,
+      "categorySlug": "office-boy",
+      "description": "Global Enterprises is looking for a reliable Office Boy to join our team in Lahore, Pakistan.\n\nYou will work with our supervisor, follow safety rules and complete daily tasks on time. Training is provided to the right candidate.",
+      "requirements": "Minimum 1 year experience\nHonest and punctual\nAble to work in shifts\nBasic communication skills",
+      "status": "open",
+      "createdAt": "2026-10-13T12:54:51.348Z"
+    },
+    {
+      "id": "0788bfe9-146c-4aaf-ac59-a9d4e005081c",
+      "slug": "security-guard-safe-secure-ltd",
+      "title": "Security Guard",
+      "company": "Safe & Secure Ltd.",
+      "location": "Rawalpindi, Pakistan",
+      "type": "Full Time",
+      "salaryMin": 28000,
+      "salaryMax": 38000,
+      "categorySlug": "security-guard",
+      "description": "Safe & Secure Ltd. is looking for a reliable Security Guard to join our team in Rawalpindi, Pakistan.\n\nYou will work with our supervisor, follow safety rules and complete daily tasks on time. Training is provided to the right candidate.",
+      "requirements": "Minimum 1 year experience\nHonest and punctual\nAble to work in shifts\nBasic communication skills",
+      "status": "open",
+      "createdAt": "2026-10-12T12:54:51.348Z"
+    },
+    {
+      "id": "414429ce-5312-40cf-aeef-d7c0eac10553",
+      "slug": "electrician-power-solutions",
+      "title": "Electrician",
+      "company": "Power Solutions",
+      "location": "Karachi, Pakistan",
+      "type": "Full Time",
+      "salaryMin": 30000,
+      "salaryMax": 45000,
+      "categorySlug": "electrician",
+      "description": "Power Solutions is looking for a reliable Electrician to join our team in Karachi, Pakistan.\n\nYou will work with our supervisor, follow safety rules and complete daily tasks on time. Training is provided to the right candidate.",
+      "requirements": "Minimum 1 year experience\nHonest and punctual\nAble to work in shifts\nBasic communication skills",
+      "status": "open",
+      "createdAt": "2026-10-20T12:54:51.348Z"
+    },
+    {
+      "id": "bc89124b-3a1a-48aa-8f23-2e3340208bfe",
+      "slug": "primary-school-teacher-bright-future-school",
+      "title": "Primary School Teacher",
+      "company": "Bright Future School",
+      "location": "Lahore, Pakistan",
+      "type": "Full Time",
+      "salaryMin": 30000,
+      "salaryMax": 45000,
+      "categorySlug": "teaching",
+      "description": "Bright Future School is looking for a reliable Primary School Teacher to join our team in Lahore, Pakistan.\n\nYou will work with our supervisor, follow safety rules and complete daily tasks on time. Training is provided to the right candidate.",
+      "requirements": "Minimum 1 year experience\nHonest and punctual\nAble to work in shifts\nBasic communication skills",
+      "status": "open",
+      "createdAt": "2026-10-10T12:54:51.348Z"
+    },
+    {
+      "id": "270c6f7d-5ac0-4f5f-9d3a-d22ba98ce620",
+      "slug": "staff-nurse-shifa-care-hospital",
+      "title": "Staff Nurse",
+      "company": "Shifa Care Hospital",
+      "location": "Islamabad, Pakistan",
+      "type": "Contract",
+      "salaryMin": 45000,
+      "salaryMax": 65000,
+      "categorySlug": "healthcare",
+      "description": "Shifa Care Hospital is looking for a reliable Staff Nurse to join our team in Islamabad, Pakistan.\n\nYou will work with our supervisor, follow safety rules and complete daily tasks on time. Training is provided to the right candidate.",
+      "requirements": "Minimum 1 year experience\nHonest and punctual\nAble to work in shifts\nBasic communication skills",
+      "status": "open",
+      "createdAt": "2026-10-07T12:54:51.348Z"
+    }
+  ],
+  "resumes": [],
+  "applications": [],
+  "resetTokens": [],
+  "messages": []
+}

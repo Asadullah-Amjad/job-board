@@ -29,13 +29,13 @@ export async function saveJobAction(_: ActionState, fd: FormData): Promise<Actio
   if (!input.title || !input.company || !input.location || !input.description)
     return { error: "Title, company, location and description are required." };
   if (!JOB_TYPES.includes(type)) return { error: "Please select a job type." };
-  if (!listCategories().some((c) => c.slug === input.categorySlug))
+  if (!(await listCategories()).some((c) => c.slug === input.categorySlug))
     return { error: "Please select a category." };
   if (!Number.isFinite(input.salaryMin) || !Number.isFinite(input.salaryMax) || input.salaryMin < 0 || input.salaryMax < input.salaryMin)
     return { error: "Enter a valid salary range (max must be at least min)." };
 
-  if (id) updateJob(id, input);
-  else createJob(input);
+  if (id) await updateJob(id, input);
+  else await createJob(input);
   revalidatePath("/", "layout");
   redirect("/admin/jobs");
 }
@@ -44,7 +44,7 @@ export async function deleteJobAction(fd: FormData): Promise<ActionState> {
   await requireAdmin();
   const id = str(fd, "id");
   if (!id) return { error: "Job ID is required." };
-  deleteJob(id);
+  await deleteJob(id);
   revalidatePath("/", "layout");
   return { success: "Job and its applications deleted." };
 }
@@ -53,7 +53,7 @@ export async function createCategoryAction(_: ActionState, fd: FormData): Promis
   await requireAdmin();
   const name = str(fd, "name");
   if (name.length < 2) return { error: "Category name is too short." };
-  if (!createCategory(name)) return { error: "This category already exists." };
+  if (!(await createCategory(name))) return { error: "This category already exists." };
   revalidatePath("/", "layout");
   return { success: "Category added." };
 }
@@ -62,7 +62,7 @@ export async function deleteCategoryAction(fd: FormData): Promise<ActionState> {
   await requireAdmin();
   const slug = str(fd, "slug");
   if (!slug) return { error: "Category is required." };
-  if (!deleteCategory(slug)) return { error: "Category could not be deleted because it has jobs." };
+  if (!(await deleteCategory(slug))) return { error: "Category could not be deleted because it has jobs." };
   revalidatePath("/", "layout");
   return { success: "Category deleted." };
 }

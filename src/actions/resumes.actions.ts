@@ -20,7 +20,7 @@ export async function deleteResumeAction(fd: FormData): Promise<ActionState> {
   const user = await requireUser();
   const id = str(fd, "id");
   if (!id) return { error: "Resume ID is required." };
-  if (!deleteResume(id, user.id)) return { error: "Resume could not be found." };
+  if (!(await deleteResume(id, user.id))) return { error: "Resume could not be found." };
   revalidatePath("/dashboard", "layout");
   return { success: "Resume deleted." };
 }

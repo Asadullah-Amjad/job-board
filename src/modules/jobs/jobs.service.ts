@@ -1,4 +1,4 @@
-import { readDb, updateDb, uid } from "@/lib/db";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { slugify } from "@/lib/utils/slugify";
 import type { CategoryWithCount, Job, JobInput } from "@/types/job.types";
 
@@ -11,70 +11,117 @@ export interface JobFilters {
   limit?: number;
 }
 
-export function listJobs(f: JobFilters = {}): Job[] {
-  const q = f.q?.toLowerCase().trim();
-  const loc = f.location?.toLowerCase().trim();
-  const result = readDb()
-    .jobs.filter((j) => {
-      if (!f.includeClosed && j.status !== "open") return false;
-      if (q && !`${j.title} ${j.company} ${j.description}`.toLowerCase().includes(q)) return false;
-      if (loc && !j.location.toLowerCase().includes(loc)) return false;
-      if (f.category && j.categorySlug !== f.category) return false;
-      if (f.type && j.type !== f.type) return false;
-      return true;
-    })
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  return f.limit ? result.slice(0, f.limit) : result;
+function mapJob(row: Record<string, unknown>): Job {
+  return {
+    id: row.id as string,
+    slug: row.slug as string,
+    title: row.title as string,
+    company: row.company as string,
+    location: row.location as string,
+    type: row.type as Job["type"],
+    salaryMin: row.salary_min as number,
+    salaryMax: row.salary_max as number,
+    categorySlug: row.category_slug as string,
+    description: row.description as string,
+    requirements: row.requirements as string,
+    status: row.status as Job["status"],
+    createdAt: row.created_at as string,
+  };
 }
 
-export const getJobBySlug = (slug: string) => readDb().jobs.find((j) => j.slug === slug) ?? null;
-export const getJobById = (id: string) => readDb().jobs.find((j) => j.id === id) ?? null;
-
-export function createJob(input: JobInput) {
-  return updateDb((db) => {
-    let slug = slugify(`${input.title}-${input.company}`);
-    if (db.jobs.some((j) => j.slug === slug)) slug = `${slug}-${uid().slice(0, 6)}`;
-    const job: Job = { ...input, id: uid(), slug, createdAt: new Date().toISOString() };
-    db.jobs.push(job);
-    return job;
-  });
+export async function listJobs(f: JobFilters = {}): Promise<Job[]> {
+  const supabase = await createSupabaseServerClient();
+  let query = supabase.from("jobs").select("*").order("created_at", { ascending: false });
+  if (!f.includeClosed) query = query.eq("status", "open");
+  if (f.location) query = query.ilike("location", `%${f.location}%`);
+  if (f.category) query = query.eq("category_slug", f.category);
+  if (f.type) query = query.eq("type", f.type);
+  if (f.q) query = query.or(`title.ilike.%${f.q}%,company.ilike.%${f.q}%,description.ilike.%${f.q}%`);
+  if (f.limit) query = query.limit(f.limit);
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+  return (data ?? []).map(mapJob);
 }
 
-export function updateJob(id: string, input: JobInput) {
-  updateDb((db) => {
-    const job = db.jobs.find((j) => j.id === id);
-    if (job) Object.assign(job, input);
-  });
+export async function getJobBySlug(slug: string): Promise<Job | null> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.from("jobs").select("*").eq("slug", slug).maybeSingle();
+  if (error) throw new Error(error.message);
+  return data ? mapJob(data) : null;
 }
 
-export function deleteJob(id: string) {
-  updateDb((db) => {
-    db.jobs = db.jobs.filter((j) => j.id !== id);
-    db.applications = db.applications.filter((a) => a.jobId !== id);
-  });
+export async function getJobById(id: string): Promise<Job | null> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.from("jobs").select("*").eq("id", id).maybeSingle();
+  if (error) throw new Error(error.message);
+  return data ? mapJob(data) : null;
 }
 
-export function listCategories(): CategoryWithCount[] {
-  const db = readDb();
-  return db.categories.map((c) => ({
-    ...c,
-    jobCount: db.jobs.filter((j) => j.categorySlug === c.slug && j.status === "open").length,
+export async function createJob(input: JobInput) {
+  const supabase = await createSupabaseServerClient();
+  const baseSlug = slugify(`${input.title}-${input.company}`);
+  const row = {
+    slug: baseSlug,
+    title: input.title, company: input.company, location: input.location,
+    type: input.type, salary_min: input.salaryMin, salary_max: input.salaryMax,
+    category_slug: input.categorySlug, description: input.description,
+    requirements: input.requirements, status: input.status,
+  };
+  const { data, error } = await supabase.from("jobs").insert(row).select("*").single();
+  if (error) {
+    if (error.code === "23505") {
+      const retry = await supabase.from("jobs").insert({ ...row, slug: `${baseSlug}-${crypto.randomUUID().slice(0, 6)}` }).select("*").single();
+      if (retry.error) throw new Error(retry.error.message);
+      return mapJob(retry.data);
+    }
+    throw new Error(error.message);
+  }
+  return mapJob(data);
+}
+
+export async function updateJob(id: string, input: JobInput) {
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.from("jobs").update({
+    title: input.title, company: input.company, location: input.location,
+    type: input.type, salary_min: input.salaryMin, salary_max: input.salaryMax,
+    category_slug: input.categorySlug, description: input.description,
+    requirements: input.requirements, status: input.status,
+  }).eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
+export async function deleteJob(id: string) {
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.from("jobs").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
+export async function listCategories(): Promise<CategoryWithCount[]> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("categories")
+    .select("slug,name,jobs(id,status)")
+    .order("name");
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((row) => ({
+    slug: row.slug,
+    name: row.name,
+    jobCount: row.jobs.filter((job: { status: string }) => job.status === "open").length,
   }));
 }
 
-export function createCategory(name: string) {
-  return updateDb((db) => {
-    const slug = slugify(name);
-    if (!slug || db.categories.some((c) => c.slug === slug)) return false;
-    db.categories.push({ slug, name });
-    return true;
-  });
+export async function createCategory(name: string) {
+  const supabase = await createSupabaseServerClient();
+  const slug = slugify(name);
+  if (!slug) return false;
+  const { error } = await supabase.from("categories").insert({ slug, name });
+  return !error;
 }
 
-export function deleteCategory(slug: string) {
-  return updateDb((db) => {
-    if (db.jobs.some((j) => j.categorySlug === slug)) return false;
-    db.categories = db.categories.filter((c) => c.slug !== slug);
-    return true;
-  });
+export async function deleteCategory(slug: string) {
+  const supabase = await createSupabaseServerClient();
+  const { count } = await supabase.from("jobs").select("id", { count: "exact", head: true }).eq("category_slug", slug);
+  if (count) return false;
+  const { error } = await supabase.from("categories").delete().eq("slug", slug);
+  return !error;
 }

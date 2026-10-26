@@ -12,8 +12,8 @@ type SP = { q?: string; location?: string; category?: string; type?: string; pag
 // Next 16: searchParams ek Promise hai
 export default async function JobsPage({ searchParams }: { searchParams: Promise<SP> }) {
   const sp = await searchParams;
-  const page = paginate(listJobs(sp), parsePage(sp.page), 12);
-  const categories = listCategories();
+  const [jobs, categories] = await Promise.all([listJobs(sp), listCategories()]);
+  const page = paginate(jobs, parsePage(sp.page), 12);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">

@@ -10,11 +10,12 @@ import Pagination from "@/components/ui/Pagination";
 export default async function AdminJobsPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
   await requireAdmin();
   const { page: pageParam } = await searchParams;
-  const page = paginate(listJobs({ includeClosed: true }), parsePage(pageParam), 10);
+  const [jobs, categories] = await Promise.all([listJobs({ includeClosed: true }), listCategories()]);
+  const page = paginate(jobs, parsePage(pageParam), 10);
   return (
     <>
       <PageTitle title="Jobs" action={<Link href="/admin/jobs/new" className={buttonClasses("primary")}>Post new job</Link>} />
-      <JobsTable jobs={page.items} categories={listCategories()} />
+      <JobsTable jobs={page.items} categories={categories} />
       <Pagination page={page} pathname="/admin/jobs" searchParams={{}} />
     </>
   );

@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: "Companies" };
 export default async function CompaniesPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
   const { page: pageParam } = await searchParams;
   const counts = new Map<string, number>();
-  for (const j of listJobs()) counts.set(j.company, (counts.get(j.company) ?? 0) + 1);
+  for (const j of await listJobs()) counts.set(j.company, (counts.get(j.company) ?? 0) + 1);
   const page = paginate([...counts.entries()].sort((a, b) => b[1] - a[1]), parsePage(pageParam), 12);
 
   return (

@@ -8,7 +8,7 @@ export default async function NewJobPage() {
   return (
     <>
       <PageTitle title="Post new job" />
-      <JobForm categories={listCategories()} />
+      <JobForm categories={await listCategories()} />
     </>
   );
 }

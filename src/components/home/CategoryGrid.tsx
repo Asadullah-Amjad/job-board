@@ -3,8 +3,8 @@ import { ArrowRight } from "lucide-react";
 import { listCategories } from "@/modules/jobs/jobs.service";
 import { getCategoryMeta } from "@/lib/categoryIcons";
 
-export default function CategoryGrid() {
-  const categories = listCategories().slice(0, 10);
+export default async function CategoryGrid() {
+  const categories = (await listCategories()).slice(0, 10);
   return (
     <section className="mx-auto max-w-7xl px-4 pt-10 sm:px-6">
       <div className="flex items-center justify-between">

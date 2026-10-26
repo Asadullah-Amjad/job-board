@@ -12,7 +12,7 @@ import { formatDate } from "@/lib/utils/formatDate";
 export default async function AdminApplicationPage({ params }: { params: Promise<{ id: string }> }) {
   await requireAdmin();
   const { id } = await params;
-  const app = getApplication(id);
+  const app = await getApplication(id);
   if (!app) notFound();
   const c = app.candidate;
 

@@ -10,8 +10,8 @@ export default function ForgotPasswordPage() {
   return (
     <>
       <h1 className="text-2xl font-bold text-navy">Forgot password?</h1>
-      <p className="mt-1 mb-6 text-sm text-muted">Enter your email and we will create a reset link.</p>
-      <ActionForm action={forgotPasswordAction} submitLabel="Get reset link">
+      <p className="mt-1 mb-6 text-sm text-muted">Enter your email and we will send a reset link.</p>
+      <ActionForm action={forgotPasswordAction} submitLabel="Send reset link">
         <Field label="Email"><input type="email" name="email" required className={inputClass} /></Field>
       </ActionForm>
       <p className="mt-5 text-center text-sm"><Link href="/login" className="text-primary hover:underline">Back to login</Link></p>

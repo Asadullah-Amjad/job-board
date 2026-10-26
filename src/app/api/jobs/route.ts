@@ -2,7 +2,7 @@ import { listJobs } from "@/modules/jobs/jobs.service";
 
 export async function GET(req: Request) {
   const p = new URL(req.url).searchParams;
-  const jobs = listJobs({
+  const jobs = await listJobs({
     q: p.get("q") ?? undefined,
     location: p.get("location") ?? undefined,
     category: p.get("category") ?? undefined,

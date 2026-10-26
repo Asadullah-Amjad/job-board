@@ -1,12 +1,11 @@
 import type { Category, Job } from "./job.types";
 
-export type Role = "candidate" | "admin";
+export type Role = "user" | "admin";
 
 export interface User {
   id: string;
   name: string;
   email: string;
-  passwordHash: string;
   role: Role;
   phone?: string;
   city?: string;
@@ -14,7 +13,7 @@ export interface User {
   bio?: string;
   createdAt: string;
 }
-export type SafeUser = Omit<User, "passwordHash">;
+export type SafeUser = User;
 
 export interface Resume {
   id: string;
@@ -46,11 +45,6 @@ export interface Application {
   updatedAt: string;
 }
 
-export interface ResetToken {
-  token: string;
-  userId: string;
-  expires: number;
-}
 export interface ContactMessage {
   id: string;
   name: string;
@@ -59,12 +53,3 @@ export interface ContactMessage {
   createdAt: string;
 }
 
-export interface Database {
-  users: User[];
-  categories: Category[];
-  jobs: Job[];
-  resumes: Resume[];
-  applications: Application[];
-  resetTokens: ResetToken[];
-  messages: ContactMessage[];
-}

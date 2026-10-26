@@ -12,7 +12,7 @@ export const metadata: Metadata = { title: "My resumes" };
 
 export default async function ResumesPage() {
   const user = await requireUser();
-  const resumes = listResumes(user.id);
+  const resumes = await listResumes(user.id);
   return (
     <>
       <PageTitle title="My resumes" subtitle="Upload your CV once and use it for every application." />

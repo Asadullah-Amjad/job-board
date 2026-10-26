@@ -33,7 +33,7 @@ export default function JobDetails({
         Login to apply
       </Link>
     );
-  } else if (user.role !== "candidate") {
+  } else if (user.role !== "user") {
     action = <p className="text-center text-sm text-muted">Admin accounts cannot apply for jobs.</p>;
   } else if (applied) {
     action = (

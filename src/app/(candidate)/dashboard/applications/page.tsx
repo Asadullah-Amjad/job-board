@@ -11,7 +11,8 @@ export const metadata: Metadata = { title: "My applications" };
 export default async function ApplicationsPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
   const user = await requireUser();
   const { page: pageParam } = await searchParams;
-  const page = paginate(listApplications({ userId: user.id }), parsePage(pageParam), 10);
+  const applications = await listApplications({ userId: user.id });
+  const page = paginate(applications, parsePage(pageParam), 10);
   return (
     <>
       <PageTitle title="My applications" />

@@ -10,7 +10,7 @@ import { formatSalary } from "@/lib/utils/formatSalary";
 export default async function ApplicationDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireUser();
   const { id } = await params;
-  const app = getApplication(id);
+  const app = await getApplication(id);
   if (!app || app.userId !== user.id) notFound();
 
   return (

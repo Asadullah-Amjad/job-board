@@ -3,15 +3,11 @@ import CategoryForm from "@/components/admin/CategoryForm";
 import ConfirmActionButton from "@/components/ui/ConfirmActionButton";
 import { deleteCategoryAction } from "@/actions/jobs.actions";
 import { requireAdmin } from "@/lib/auth/session";
-import { readDb } from "@/lib/db";
 import { listCategories } from "@/modules/jobs/jobs.service";
 
 export default async function AdminCategoriesPage() {
   await requireAdmin();
-  const categories = listCategories();
-  const totalPerCat = new Map<string, number>();
-  for (const j of readDb().jobs) totalPerCat.set(j.categorySlug, (totalPerCat.get(j.categorySlug) ?? 0) + 1);
-
+  const categories = await listCategories();
   return (
     <>
       <PageTitle title="Categories" subtitle="A category with jobs cannot be deleted." />
@@ -24,7 +20,7 @@ export default async function AdminCategoriesPage() {
             </thead>
             <tbody>
               {categories.map((c) => {
-                const total = totalPerCat.get(c.slug) ?? 0;
+                const total = c.jobCount;
                 return (
                   <tr key={c.slug} className="border-t border-line">
                     <td className="px-4 py-3 font-medium">{c.name}</td>

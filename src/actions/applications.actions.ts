@@ -9,8 +9,8 @@ import { createApplication, setApplicationStatus } from "@/modules/applications/
 
 export async function applyAction(_: ActionState, fd: FormData): Promise<ActionState> {
   const user = await requireUser();
-  if (user.role !== "candidate") return { error: "Only candidates can apply for jobs." };
-  const res = createApplication({
+  if (user.role !== "user") return { error: "Only users can apply for jobs." };
+  const res = await createApplication({
     userId: user.id,
     jobId: str(fd, "jobId"),
     resumeId: str(fd, "resumeId"),
@@ -25,7 +25,7 @@ export async function updateApplicationStatusAction(_: ActionState, fd: FormData
   await requireAdmin();
   const status = str(fd, "status") as ApplicationStatus;
   if (!APPLICATION_STATUSES.includes(status)) return { error: "Invalid status." };
-  setApplicationStatus(str(fd, "id"), status);
+  await setApplicationStatus(str(fd, "id"), status);
   revalidatePath("/", "layout");
   return { success: "Status updated." };
 }

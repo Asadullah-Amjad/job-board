@@ -5,9 +5,9 @@ import { listCategories, listJobs } from "@/modules/jobs/jobs.service";
 
 const popular = ["Plumber", "Car Driver", "Computer Operator", "Office Boy", "Electrician"];
 
-export default function HeroSection() {
-  const categories = listCategories();
-  const total = listJobs().length;
+export default async function HeroSection() {
+  const [categories, jobs] = await Promise.all([listCategories(), listJobs()]);
+  const total = jobs.length;
 
   return (
     <section className="relative overflow-hidden bg-linear-to-br from-sky-100 via-blue-50 to-white">

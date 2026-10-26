@@ -11,7 +11,8 @@ import Pagination from "@/components/ui/Pagination";
 export default async function AdminApplicationsPage({ searchParams }: { searchParams: Promise<{ status?: string; page?: string }> }) {
   await requireAdmin();
   const { status, page: pageParam } = await searchParams;
-  const page = paginate(listApplications({ status }), parsePage(pageParam), 10);
+  const applications = await listApplications({ status });
+  const page = paginate(applications, parsePage(pageParam), 10);
   const tabs = [{ label: "All", value: "" }, ...APPLICATION_STATUSES.map((s) => ({ label: s, value: s }))];
 
   return (

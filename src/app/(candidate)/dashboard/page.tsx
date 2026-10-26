@@ -8,8 +8,10 @@ import { listResumes } from "@/modules/resumes/resumes.service";
 
 export default async function DashboardPage() {
   const user = await requireUser();
-  const apps = listApplications({ userId: user.id });
-  const resumes = listResumes(user.id);
+  const [apps, resumes] = await Promise.all([
+    listApplications({ userId: user.id }),
+    listResumes(user.id),
+  ]);
   const profileDone = Boolean(user.phone && user.city && user.skills);
 
   const stats = [

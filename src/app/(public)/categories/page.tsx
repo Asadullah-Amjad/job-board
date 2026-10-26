@@ -5,8 +5,8 @@ import { getCategoryMeta } from "@/lib/categoryIcons";
 
 export const metadata: Metadata = { title: "Job Categories" };
 
-export default function CategoriesPage() {
-  const categories = listCategories();
+export default async function CategoriesPage() {
+  const categories = await listCategories();
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
       <h1 className="text-3xl font-bold text-navy">Job Categories</h1>

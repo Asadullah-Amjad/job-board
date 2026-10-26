@@ -1,6 +1,5 @@
-import { readDb, updateDb, uid } from "@/lib/db";
-import { toSafe } from "@/modules/auth/auth.service";
-import type { Application, ApplicationStatus, Database, Resume, SafeUser } from "@/types/db.types";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import type { Application, ApplicationStatus, Resume, SafeUser } from "@/types/db.types";
 import type { Job } from "@/types/job.types";
 
 export interface ApplicationView extends Application {
@@ -9,65 +8,107 @@ export interface ApplicationView extends Application {
   resume: Resume | null;
 }
 
-function view(db: Database, a: Application): ApplicationView {
-  const user = db.users.find((u) => u.id === a.userId);
+async function hydrate(row: Record<string, any>): Promise<ApplicationView> {
   return {
-    ...a,
-    job: db.jobs.find((j) => j.id === a.jobId) ?? null,
-    candidate: user ? toSafe(user) : null,
-    resume: db.resumes.find((r) => r.id === a.resumeId) ?? null,
+    id: row.id,
+    jobId: row.job_id,
+    userId: row.user_id,
+    resumeId: row.resume_id,
+    note: row.note,
+    status: row.status,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    job: row.jobs ? {
+      id: row.jobs.id,
+      slug: row.jobs.slug,
+      title: row.jobs.title,
+      company: row.jobs.company,
+      location: row.jobs.location,
+      type: row.jobs.type,
+      salaryMin: row.jobs.salary_min,
+      salaryMax: row.jobs.salary_max,
+      categorySlug: row.jobs.category_slug,
+      description: row.jobs.description,
+      requirements: row.jobs.requirements,
+      status: row.jobs.status,
+      createdAt: row.jobs.created_at,
+    } : null,
+    candidate: row.profiles ? {
+      id: row.profiles.id,
+      name: row.profiles.name,
+      email: row.profiles.email,
+      role: row.profiles.role,
+      createdAt: row.profiles.created_at,
+    } : null,
+    resume: row.resumes ? {
+      id: row.resumes.id,
+      userId: row.resumes.user_id,
+      originalName: row.resumes.original_name,
+      storedName: row.resumes.stored_name,
+      size: row.resumes.size_bytes,
+      mime: row.resumes.mime_type,
+      createdAt: row.resumes.created_at,
+    } : null,
   };
 }
 
-export function listApplications(filter: { userId?: string; status?: string } = {}) {
-  const db = readDb();
-  return db.applications
-    .filter((a) => (!filter.userId || a.userId === filter.userId) && (!filter.status || a.status === filter.status))
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-    .map((a) => view(db, a));
+const viewSelect = "*,jobs(*),profiles(id,name,email,role,created_at),resumes(*)";
+
+export async function listApplications(filter: { userId?: string; status?: string } = {}): Promise<ApplicationView[]> {
+  const supabase = await createSupabaseServerClient();
+  let query = supabase.from("applications").select(viewSelect).order("created_at", { ascending: false });
+  if (filter.userId) query = query.eq("user_id", filter.userId);
+  if (filter.status) query = query.eq("status", filter.status);
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+  return Promise.all((data ?? []).map(hydrate));
 }
 
-export function getApplication(id: string) {
-  const db = readDb();
-  const a = db.applications.find((x) => x.id === id);
-  return a ? view(db, a) : null;
+export async function getApplication(id: string): Promise<ApplicationView | null> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.from("applications").select(viewSelect).eq("id", id).maybeSingle();
+  if (error) throw new Error(error.message);
+  return data ? hydrate(data) : null;
 }
 
-export function hasApplied(userId: string, jobId: string) {
-  return readDb().applications.some((a) => a.userId === userId && a.jobId === jobId);
+export async function hasApplied(userId: string, jobId: string) {
+  const supabase = await createSupabaseServerClient();
+  const { data } = await supabase.from("applications").select("id").eq("user_id", userId).eq("job_id", jobId).maybeSingle();
+  return Boolean(data);
 }
 
-export function createApplication(input: { userId: string; jobId: string; resumeId: string; note: string }): { error?: string } {
-  return updateDb((db) => {
-    const job = db.jobs.find((j) => j.id === input.jobId);
-    if (!job || job.status !== "open") return { error: "This job is no longer open." };
-    const resume = db.resumes.find((r) => r.id === input.resumeId && r.userId === input.userId);
-    if (!resume) return { error: "Please select one of your resumes." };
-    if (db.applications.some((a) => a.userId === input.userId && a.jobId === input.jobId))
-      return { error: "You have already applied for this job." };
-    const now = new Date().toISOString();
-    db.applications.push({ id: uid(), ...input, status: "pending", createdAt: now, updatedAt: now });
-    return {};
-  });
+export async function createApplication(input: { userId: string; jobId: string; resumeId: string; note: string }): Promise<{ error?: string }> {
+  const supabase = await createSupabaseServerClient();
+  const { data: job } = await supabase.from("jobs").select("id,status").eq("id", input.jobId).maybeSingle();
+  if (!job || job.status !== "open") return { error: "This job is no longer open." };
+  const { data: resume } = await supabase.from("resumes").select("id").eq("id", input.resumeId).eq("user_id", input.userId).maybeSingle();
+  if (!resume) return { error: "Please select one of your resumes." };
+  const { error } = await supabase.from("applications").insert({ ...input, job_id: input.jobId, user_id: input.userId, resume_id: input.resumeId, status: "pending" });
+  if (error?.code === "23505") return { error: "You have already applied for this job." };
+  if (error) return { error: error.message };
+  return {};
 }
 
-export function setApplicationStatus(id: string, status: ApplicationStatus) {
-  updateDb((db) => {
-    const a = db.applications.find((x) => x.id === id);
-    if (a) {
-      a.status = status;
-      a.updatedAt = new Date().toISOString();
-    }
-  });
+export async function setApplicationStatus(id: string, status: ApplicationStatus) {
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.from("applications").update({ status }).eq("id", id);
+  if (error) throw new Error(error.message);
 }
 
-export function applicationStats() {
-  const db = readDb();
+export async function applicationStats() {
+  const supabase = await createSupabaseServerClient();
+  const [applications, jobs, profiles] = await Promise.all([
+    supabase.from("applications").select("id,status"),
+    supabase.from("jobs").select("id,status"),
+    supabase.from("profiles").select("id", { count: "exact" }).eq("role", "user"),
+  ]);
+  const rows = applications.data ?? [];
+  const jobsRows = jobs.data ?? [];
   return {
-    total: db.applications.length,
-    pending: db.applications.filter((a) => a.status === "pending").length,
-    jobs: db.jobs.length,
-    openJobs: db.jobs.filter((j) => j.status === "open").length,
-    candidates: db.users.filter((u) => u.role === "candidate").length,
+    total: rows.length,
+    pending: rows.filter((row) => row.status === "pending").length,
+    jobs: jobsRows.length,
+    openJobs: jobsRows.filter((row) => row.status === "open").length,
+    candidates: profiles.count ?? 0,
   };
 }

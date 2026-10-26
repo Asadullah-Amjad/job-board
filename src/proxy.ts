@@ -1,16 +1,32 @@
+import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { SESSION_COOKIE } from "@/lib/auth/constants";
 
-// Next 16: proxy.ts = purana middleware.
-// Yahan sirf cookie ka quick check hai. Asal verification layouts mein requireUser()/requireAdmin() karte hain.
-export function proxy(req: NextRequest) {
-  if (!req.cookies.has(SESSION_COOKIE)) {
+export async function proxy(req: NextRequest) {
+  let res = NextResponse.next({ request: req });
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    {
+      cookies: {
+        getAll: () => req.cookies.getAll(),
+        setAll: (cookiesToSet) => {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            res.cookies.set(name, value, options);
+          });
+        },
+      },
+    }
+  );
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
     const url = req.nextUrl.clone();
     url.pathname = "/login";
     url.search = `?next=${encodeURIComponent(req.nextUrl.pathname)}`;
     return NextResponse.redirect(url);
   }
-  return NextResponse.next();
+
+  return res;
 }
 
 export const config = { matcher: ["/dashboard/:path*", "/admin/:path*"] };

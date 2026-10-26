@@ -7,7 +7,7 @@ import { applicationStats, listApplications } from "@/modules/applications/appli
 
 export default async function AdminHomePage() {
   await requireAdmin();
-  const s = applicationStats();
+  const s = await applicationStats();
   const cards = [
     { label: "Total jobs", value: s.jobs },
     { label: "Open jobs", value: s.openJobs },
@@ -27,7 +27,7 @@ export default async function AdminHomePage() {
         ))}
       </div>
       <h2 className="mt-8 mb-3 text-lg font-bold text-navy">Latest applications</h2>
-      <ApplicantsTable applications={listApplications().slice(0, 5)} />
+      <ApplicantsTable applications={(await listApplications()).slice(0, 5)} />
     </>
   );
 }

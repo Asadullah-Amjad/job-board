@@ -3,8 +3,8 @@ import { ArrowRight } from "lucide-react";
 import { listJobs } from "@/modules/jobs/jobs.service";
 import JobCard from "@/components/jobs/JobCard";
 
-export default function LatestJobs() {
-  const jobs = listJobs({ limit: 6 });
+export default async function LatestJobs() {
+  const jobs = await listJobs({ limit: 6 });
   return (
     <section className="mx-auto max-w-7xl px-4 pt-10 sm:px-6">
       <div className="flex items-center justify-between">

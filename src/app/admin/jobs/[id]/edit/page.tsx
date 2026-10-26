@@ -7,12 +7,12 @@ import { getJobById, listCategories } from "@/modules/jobs/jobs.service";
 export default async function EditJobPage({ params }: { params: Promise<{ id: string }> }) {
   await requireAdmin();
   const { id } = await params;
-  const job = getJobById(id);
+  const [job, categories] = await Promise.all([getJobById(id), listCategories()]);
   if (!job) notFound();
   return (
     <>
       <PageTitle title={`Edit: ${job.title}`} />
-      <JobForm job={job} categories={listCategories()} />
+      <JobForm job={job} categories={categories} />
     </>
   );
 }

@@ -53,3 +53,12 @@ export interface ContactMessage {
   createdAt: string;
 }
 
+export interface Database {
+  users: User[];
+  categories: Category[];
+  jobs: Job[];
+  resumes: Resume[];
+  applications: Application[];
+  resetTokens: unknown[];
+  messages: ContactMessage[];
+}

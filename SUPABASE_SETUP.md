@@ -1,6 +1,6 @@
-# Supabase Setup
+# Supabase Database and Custom Auth Setup
 
-This project uses Supabase Auth, Supabase Postgres, and a private Supabase Storage bucket for resumes.
+This project uses Supabase Postgres and a private Supabase Storage bucket for resumes. Application authentication is implemented in Next.js with hashed passwords and HttpOnly cookie sessions; Supabase Auth is not used by the application.
 
 ## 1. Apply the migrations
 
@@ -8,59 +8,92 @@ Open the Supabase SQL Editor for the project configured in `.env`, then run thes
 
 1. `supabase/migrations/202610260001_initial_job_board.sql`
 2. `supabase/migrations/202610260002_seed_job_data.sql`
+3. `supabase/migrations/202610280001_custom_auth.sql`
 
-The first migration creates:
+The first migration creates the application tables, RLS policies, and private resume bucket. The second seeds categories and jobs. The custom-auth migration creates:
 
-- `public.profiles`
-- `public.categories`
-- `public.jobs`
-- `public.resumes`
-- `public.applications`
-- `public.contact_messages`
-- Row-level security policies
-- The `resumes` private Storage bucket
-- An Auth trigger that creates every normal signup as `user`
+- `public.users` with password hashes and verification timestamps
+- `public.auth_sessions`
+- `public.email_verification_tokens`
+- `public.password_reset_tokens`
 
-The second migration seeds the existing project categories and jobs.
+Run the custom-auth migration before testing registration or login. New custom-auth users are intentionally separate from any old Supabase Auth users.
 
-## 2. Enable email confirmation
+If the migration file is not available in your Supabase project, run this minimum query first in the SQL Editor:
 
-In Supabase Dashboard:
+```sql
+create table if not exists public.users (
+  id uuid primary key default gen_random_uuid(),
+  email text not null,
+  password_hash text not null,
+  email_verified_at timestamptz,
+  role public.app_role not null default 'user',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
 
-1. Open **Authentication > Providers > Email**.
-2. Enable email/password authentication.
-3. Enable **Confirm email**.
-4. Leave **Secure email change** enabled.
-5. Keep the development SMTP provider enabled for now.
+create unique index if not exists users_email_lower_idx
+  on public.users (lower(email));
+```
 
-## 3. Configure Auth URLs
+The minimum query only fixes the immediate missing-table error. The complete migration is still required because registration also needs `profiles`, `email_verification_tokens`, `auth_sessions`, `password_reset_tokens`, and `auth_rate_limits`.
 
-In **Authentication > URL Configuration**, set:
+After running the migration, confirm that PostgREST can see the table:
 
-- Site URL: `http://localhost:3000`
-- Redirect URLs:
-  - `http://localhost:3000/auth/callback`
-  - `http://localhost:3000/auth/callback?next=/reset-password`
+```sql
+select to_regclass('public.users') as users_table;
+notify pgrst, 'reload schema';
+```
 
-For production, replace `localhost:3000` with the deployed HTTPS origin and update `NEXT_PUBLIC_APP_URL`.
+The result must be `public.users`. Then redeploy or restart the application so it uses the same Supabase project and server key.
 
-## 4. Create the admin account
+## 2. Configure transactional email
 
-Add these values to `.env.local`, never commit them:
+For local testing, use Mailtrap Email Sandbox over SMTP. Mailtrap captures messages in the sandbox inbox; it does not deliver them to real recipients. Configure these server-only variables in `.env.local` and Vercel:
 
 ```env
-ADMIN_EMAIL=admin@example.com
-ADMIN_PASSWORD=a-strong-unique-password
-ADMIN_NAME=JobHive Admin
+AUTH_EMAIL_PROVIDER=smtp
+SMTP_HOST=sandbox.smtp.mailtrap.io
+SMTP_PORT=2525
+SMTP_SECURE=false
+SMTP_USER=replace-with-mailtrap-smtp-user
+SMTP_PASSWORD=replace-with-mailtrap-smtp-password
+AUTH_EMAIL_FROM=JobHive <no-reply@example.com>
 ```
 
-Run:
+The SMTP credentials are available in the Mailtrap Sandbox integration settings. Keep them in environment variables and never commit them.
 
-```powershell
-npm run supabase:admin
+For preview and production, use Resend API after a sending domain has been verified:
+
+```env
+AUTH_EMAIL_PROVIDER=resend
+MAILTRAP_API_TOKEN=replace-with-mailtrap-token
+RESEND_API_KEY=replace-with-resend-api-key
+AUTH_EMAIL_FROM=JobHive <no-reply@your-verified-domain.example>
 ```
 
-The script uses `SUPABASE_SECRET_KEY` only in the Node process, confirms the Auth account, and promotes its profile to `admin`. New signups created through `/register` always receive the `user` role.
+Verify the sender domain and configure SPF, DKIM, and DMARC before production sending. The existing Mailtrap API configuration remains supported, but SMTP Sandbox is the recommended local-testing path.
+
+## 3. Configure application and server credentials
+
+```env
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT_ID.supabase.co
+SUPABASE_SECRET_KEY=replace-with-server-only-key
+```
+
+`SUPABASE_SECRET_KEY` is used only by server code and must never be exposed or committed. It is required because custom-auth requests do not create a Supabase Auth identity for RLS to use.
+
+## 4. Create an administrator
+
+Register a normal account at `/register`, complete email verification with the OTP, then run this controlled SQL operation:
+
+```sql
+update public.users set role = 'admin' where email = 'admin@example.com';
+update public.profiles set role = 'admin' where email = 'admin@example.com';
+```
+
+Do not expose an admin-registration form. New registrations always receive the `user` role.
 
 ## 5. Run the app
 
@@ -68,12 +101,13 @@ The script uses `SUPABASE_SECRET_KEY` only in the Node process, confirms the Aut
 npm run dev
 ```
 
-Open `http://localhost:3000/register`, register a normal account, confirm it from Supabase's development email, and log in. The admin account can log in at `/login` and is redirected to `/admin`.
+Register, verify the email OTP, log in, request a password reset, and verify that the reset OTP is single-use and expires.
 
 ## Security notes
 
-- `SUPABASE_SECRET_KEY` must never receive `NEXT_PUBLIC_` prefix.
-- Do not expose the secret key in browser code or public repositories.
-- RLS prevents normal users from changing their role or reading private files they do not own.
-- Password recovery uses Supabase's standard email flow and callback exchange.
-- Supabase development email is suitable for local testing only; custom SMTP can be configured later.
+- Passwords are stored as `crypto.scrypt` hashes.
+- Session, verification, and reset values are stored only as SHA-256 hashes.
+- Session cookies are HttpOnly, SameSite=Lax, and Secure in production.
+- Reset and verification codes expire and are limited to five attempts.
+- Generic reset responses avoid revealing whether an email is registered.
+- Never paste provider or Supabase secrets into source control or chat.

@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ApplicationView } from "@/modules/applications/applications.service";
 import { formatDate } from "@/lib/utils/formatDate";
 import ApplicationStatusBadge from "@/components/applications/ApplicationStatusBadge";
+import { Eye } from "lucide-react";
 
 export default function ApplicantsTable({ applications }: { applications: ApplicationView[] }) {
   if (applications.length === 0)
@@ -30,7 +31,10 @@ export default function ApplicantsTable({ applications }: { applications: Applic
               <td className="px-4 py-3 text-muted">{formatDate(a.createdAt)}</td>
               <td className="px-4 py-3"><ApplicationStatusBadge status={a.status} /></td>
               <td className="px-4 py-3 text-right">
-                <Link href={`/admin/applications/${a.id}`} className="font-medium text-primary hover:underline">Review</Link>
+                <div className="flex items-center justify-end gap-3">
+                  {a.resume && <a href={`/api/resumes/${a.resume.id}`} target="_blank" rel="noreferrer" aria-label={`View resume ${a.resume.originalName}`} title="View resume" className="rounded-md p-1.5 text-primary hover:bg-blue-50"><Eye size={18} /></a>}
+                  <Link href={`/admin/applications/${a.id}`} className="font-medium text-primary hover:underline">Review</Link>
+                </div>
               </td>
             </tr>
           ))}

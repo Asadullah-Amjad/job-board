@@ -7,8 +7,9 @@ import { JOB_TYPES, type JobInput, type JobType } from "@/types/job.types";
 import { str } from "@/lib/utils/form";
 import { requireAdmin } from "@/lib/auth/session";
 import {
-  createCategory, createJob, deleteCategory, deleteJob, listCategories, updateJob,
+  createCategory, createJob, deleteCategory, deleteJob, listCategories, updateCategory, updateJob,
 } from "@/modules/jobs/jobs.service";
+import { publicMessage } from "@/lib/errors";
 
 export async function saveJobAction(_: ActionState, fd: FormData): Promise<ActionState> {
   await requireAdmin();
@@ -29,13 +30,23 @@ export async function saveJobAction(_: ActionState, fd: FormData): Promise<Actio
   if (!input.title || !input.company || !input.location || !input.description)
     return { error: "Title, company, location and description are required." };
   if (!JOB_TYPES.includes(type)) return { error: "Please select a job type." };
-  if (!(await listCategories()).some((c) => c.slug === input.categorySlug))
+  let categories;
+  try {
+    categories = await listCategories();
+  } catch (error) {
+    return { error: publicMessage(error, "Categories are temporarily unavailable. Please try again."), code: "INTERNAL_ERROR" };
+  }
+  if (!categories.some((c) => c.slug === input.categorySlug))
     return { error: "Please select a category." };
   if (!Number.isFinite(input.salaryMin) || !Number.isFinite(input.salaryMax) || input.salaryMin < 0 || input.salaryMax < input.salaryMin)
     return { error: "Enter a valid salary range (max must be at least min)." };
 
-  if (id) await updateJob(id, input);
-  else await createJob(input);
+  try {
+    if (id) await updateJob(id, input);
+    else await createJob(input);
+  } catch (error) {
+    return { error: publicMessage(error, "The job could not be saved. Please try again."), code: "INTERNAL_ERROR" };
+  }
   revalidatePath("/", "layout");
   redirect("/admin/jobs");
 }
@@ -44,7 +55,11 @@ export async function deleteJobAction(fd: FormData): Promise<ActionState> {
   await requireAdmin();
   const id = str(fd, "id");
   if (!id) return { error: "Job ID is required." };
-  await deleteJob(id);
+  try {
+    await deleteJob(id);
+  } catch (error) {
+    return { error: publicMessage(error, "The job could not be deleted. Please try again."), code: "INTERNAL_ERROR" };
+  }
   revalidatePath("/", "layout");
   return { success: "Job and its applications deleted." };
 }
@@ -65,4 +80,20 @@ export async function deleteCategoryAction(fd: FormData): Promise<ActionState> {
   if (!(await deleteCategory(slug))) return { error: "Category could not be deleted because it has jobs." };
   revalidatePath("/", "layout");
   return { success: "Category deleted." };
+}
+
+export async function updateCategoryAction(_: ActionState, fd: FormData): Promise<ActionState> {
+  await requireAdmin();
+  const slug = str(fd, "slug");
+  const name = str(fd, "name");
+  if (!slug) return { error: "Category is required." };
+  try {
+    const result = await updateCategory(slug, name);
+    if (!result.ok) return { error: result.reason === "duplicate" ? "This category already exists." : "Category name is too short." };
+    revalidatePath("/admin/categories");
+    revalidatePath("/jobs");
+    return { success: "Category updated." };
+  } catch (error) {
+    return { error: publicMessage(error, "The category could not be updated. Please try again."), code: "INTERNAL_ERROR" };
+  }
 }

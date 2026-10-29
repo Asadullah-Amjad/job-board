@@ -45,23 +45,34 @@ select to_regclass('public.users') as users_table;
 notify pgrst, 'reload schema';
 ```
 
+If the base migration was already applied, run `supabase/migrations/202610290001_contact_job_title.sql` to add the contact form's `job_title` column, then reload the schema again:
+
+```sql
+alter table public.contact_messages
+  add column if not exists job_title text not null default '';
+
+notify pgrst, 'reload schema';
+```
+
+Until this migration is applied to the connected Supabase project, contact submissions that include a job title and the admin Query Tab will return a safe unavailable message. The migration file in the repository does not change the remote database automatically.
+
 The result must be `public.users`. Then redeploy or restart the application so it uses the same Supabase project and server key.
 
 ## 2. Configure transactional email
 
-For local testing, use Mailtrap Email Sandbox over SMTP. Mailtrap captures messages in the sandbox inbox; it does not deliver them to real recipients. Configure these server-only variables in `.env.local` and Vercel:
+For testing, use Gmail SMTP with a Gmail App Password. Do not use the normal Gmail account password. Configure these server-only variables in `.env.local` and Vercel:
 
 ```env
-AUTH_EMAIL_PROVIDER=smtp
-SMTP_HOST=sandbox.smtp.mailtrap.io
-SMTP_PORT=2525
+AUTH_EMAIL_PROVIDER=gmail
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
 SMTP_SECURE=false
-SMTP_USER=replace-with-mailtrap-smtp-user
-SMTP_PASSWORD=replace-with-mailtrap-smtp-password
-AUTH_EMAIL_FROM=JobHive <no-reply@example.com>
+SMTP_USER=your-gmail-address@gmail.com
+SMTP_PASSWORD=your-gmail-app-password
+AUTH_EMAIL_FROM=JobHive <your-gmail-address@gmail.com>
 ```
 
-The SMTP credentials are available in the Mailtrap Sandbox integration settings. Keep them in environment variables and never commit them.
+Keep the App Password in environment variables and never commit it. The Gmail account must have 2-Step Verification enabled before an App Password can be created.
 
 For preview and production, use Resend API after a sending domain has been verified:
 

@@ -1,18 +1,16 @@
 import { redirect } from "next/navigation";
 import { findUserById } from "@/modules/auth/auth.service";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { destroyCustomSession, getCustomSessionUserId } from "./custom-session";
 import type { SafeUser } from "@/types/db.types";
 
 export async function getCurrentUser(): Promise<SafeUser | null> {
-  const supabase = await createSupabaseServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
-  return findUserById(user.id);
+  const userId = await getCustomSessionUserId();
+  return userId ? findUserById(userId) : null;
 }
 
 export async function destroySession() {
-  const supabase = await createSupabaseServerClient();
-  await supabase.auth.signOut();
+  await destroyCustomSession();
 }
 
 export async function requireUser() {

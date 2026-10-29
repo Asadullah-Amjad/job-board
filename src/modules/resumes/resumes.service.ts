@@ -1,5 +1,6 @@
 import path from "node:path";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { AppError } from "@/lib/errors";
 import type { Resume } from "@/types/db.types";
 
 const ALLOWED: Record<string, string> = {
@@ -23,20 +24,20 @@ function mapResume(row: Record<string, any>): Resume {
 }
 
 export async function listResumes(userId: string): Promise<Resume[]> {
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
   const { data, error } = await supabase
     .from("resumes")
     .select("*")
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
-  if (error) throw new Error(error.message);
+  if (error) throw new AppError("DATABASE_UNAVAILABLE", "Resumes are temporarily unavailable. Please try again.", 500, { cause: error });
   return (data ?? []).map(mapResume);
 }
 
 export async function getResume(id: string): Promise<Resume | null> {
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
   const { data, error } = await supabase.from("resumes").select("*").eq("id", id).maybeSingle();
-  if (error) throw new Error(error.message);
+  if (error) throw new AppError("DATABASE_UNAVAILABLE", "Resumes are temporarily unavailable. Please try again.", 500, { cause: error });
   return data ? mapResume(data) : null;
 }
 
@@ -48,7 +49,7 @@ export async function saveResume(userId: string, file: File): Promise<{ error?: 
   if ((await listResumes(userId)).length >= MAX_RESUMES)
     return { error: `You can keep up to ${MAX_RESUMES} resumes. Delete one first.` };
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
   const storedName = `${crypto.randomUUID()}${ext}`;
   const storagePath = `${userId}/${storedName}`;
   const { error: uploadError } = await supabase.storage.from("resumes").upload(storagePath, file, {
@@ -75,7 +76,7 @@ export async function saveResume(userId: string, file: File): Promise<{ error?: 
 export async function deleteResume(id: string, userId: string) {
   const resume = await getResume(id);
   if (!resume || resume.userId !== userId) return false;
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
   const { data: row } = await supabase.from("resumes").select("storage_path").eq("id", id).single();
   const { error: deleteMetadataError } = await supabase.from("resumes").delete().eq("id", id).eq("user_id", userId);
   if (deleteMetadataError) return false;

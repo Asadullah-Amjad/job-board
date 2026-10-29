@@ -7,6 +7,7 @@ const items: SidebarItem[] = [
   { href: "/admin/jobs", label: "Jobs", icon: "jobs" },
   { href: "/admin/categories", label: "Categories", icon: "categories" },
   { href: "/admin/applications", label: "Applications", icon: "applications" },
+  { href: "/admin/queries", label: "Queries", icon: "queries" },
   { href: "/", label: "View website", icon: "site", exact: true },
 ];
 

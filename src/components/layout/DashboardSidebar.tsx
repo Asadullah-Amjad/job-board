@@ -3,12 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Briefcase, FileText, FolderTree, Globe, LayoutDashboard, ListChecks, User,
+  Briefcase, FileText, FolderTree, Globe, LayoutDashboard, ListChecks, User, MessageSquare,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
-const icons: Record<string, LucideIcon> = {
+const icons = {
   home: LayoutDashboard,
   profile: User,
   resumes: FileText,
@@ -16,12 +16,15 @@ const icons: Record<string, LucideIcon> = {
   jobs: Briefcase,
   categories: FolderTree,
   site: Globe,
-};
+  queries: MessageSquare,
+} satisfies Record<string, LucideIcon>;
+
+type SidebarIcon = keyof typeof icons;
 
 export interface SidebarItem {
   href: string;
   label: string;
-  icon: keyof typeof icons;
+  icon: SidebarIcon;
   exact?: boolean;
 }
 
@@ -37,7 +40,7 @@ export default function DashboardSidebar({ items, title }: { items: SidebarItem[
       </div>
       <nav className="flex gap-1 overflow-x-auto px-3 pb-3 md:flex-col md:pb-0">
         {items.map((item) => {
-          const Icon = icons[item.icon];
+          const Icon = icons[item.icon] ?? LayoutDashboard;
           const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
           return (
             <Link

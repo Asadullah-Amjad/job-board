@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Download } from "lucide-react";
+import { Download, Eye } from "lucide-react";
 import PageTitle from "@/components/ui/PageTitle";
 import ApplicationStatusBadge from "@/components/applications/ApplicationStatusBadge";
 import StatusUpdateDialog from "@/components/admin/StatusUpdateDialog";
@@ -31,9 +31,10 @@ export default async function AdminApplicationPage({ params }: { params: Promise
             <p className="mt-1 whitespace-pre-line">{app.note || "No note added."}</p>
           </div>
           {app.resume ? (
-            <a href={`/api/resumes/${app.resume.id}`} className={buttonClasses("outline")}>
-              <Download size={16} /> Download {app.resume.originalName}
-            </a>
+            <div className="flex flex-wrap gap-3">
+              {(app.resume.mime === "application/pdf" || app.resume.mime.startsWith("image/")) && <a href={`/api/resumes/${app.resume.id}`} target="_blank" rel="noreferrer" className={buttonClasses("outline")}><Eye size={16} /> View resume</a>}
+              <a href={`/api/resumes/${app.resume.id}`} className={buttonClasses("outline")}><Download size={16} /> Download {app.resume.originalName}</a>
+            </div>
           ) : (
             <p className="text-muted">Resume was removed by the candidate.</p>
           )}

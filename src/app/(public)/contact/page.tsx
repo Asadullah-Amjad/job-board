@@ -21,6 +21,7 @@ export default function ContactPage() {
       <ActionForm action={sendMessageAction} submitLabel="Send message" resetOnSuccess className="rounded-lg border border-line bg-white p-6">
         <Field label="Your name"><input name="name" required className={inputClass} /></Field>
         <Field label="Email"><input type="email" name="email" required className={inputClass} /></Field>
+        <Field label="Job title"><input name="jobTitle" required className={inputClass} placeholder="e.g. Frontend Developer" /></Field>
         <Field label="Message"><textarea name="message" rows={5} required minLength={10} className={inputClass} /></Field>
       </ActionForm>
     </div>

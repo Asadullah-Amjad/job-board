@@ -49,6 +49,7 @@ export interface ContactMessage {
   id: string;
   name: string;
   email: string;
+  jobTitle: string;
   message: string;
   createdAt: string;
 }

@@ -1,33 +1,16 @@
-import Link from "next/link";
 import PageTitle from "@/components/ui/PageTitle";
-import ApplicantsTable from "@/components/admin/ApplicantsTable";
+import AdminApplicationsBrowser from "@/components/admin/AdminApplicationsBrowser";
 import { requireAdmin } from "@/lib/auth/session";
-import { listApplications } from "@/modules/applications/applications.service";
-import { APPLICATION_STATUSES } from "@/types/db.types";
-import { cn } from "@/lib/utils/cn";
-import { paginate, parsePage } from "@/lib/utils/pagination";
-import Pagination from "@/components/ui/Pagination";
+import { listApplicationsPage } from "@/modules/applications/applications.service";
+import { listCategories } from "@/modules/jobs/jobs.service";
+import { parsePage } from "@/lib/utils/pagination";
 
-export default async function AdminApplicationsPage({ searchParams }: { searchParams: Promise<{ status?: string; page?: string }> }) {
+export default async function AdminApplicationsPage({ searchParams }: { searchParams: Promise<{ status?: string; category?: string; q?: string; page?: string }> }) {
   await requireAdmin();
-  const { status, page: pageParam } = await searchParams;
-  const applications = await listApplications({ status });
-  const page = paginate(applications, parsePage(pageParam), 10);
-  const tabs = [{ label: "All", value: "" }, ...APPLICATION_STATUSES.map((s) => ({ label: s, value: s }))];
-
-  return (
-    <>
-      <PageTitle title="Applications" />
-      <div className="mb-4 flex flex-wrap gap-2">
-        {tabs.map((t) => (
-          <Link key={t.label} href={t.value ? `/admin/applications?status=${t.value}` : "/admin/applications"}
-            className={cn("rounded-full border px-4 py-1.5 text-sm capitalize", (status ?? "") === t.value ? "border-primary bg-primary text-white" : "border-line bg-white hover:border-primary")}>
-            {t.label}
-          </Link>
-        ))}
-      </div>
-      <ApplicantsTable applications={page.items} />
-      <Pagination page={page} pathname="/admin/applications" searchParams={{ status }} />
-    </>
-  );
+  const params = await searchParams;
+  const [page, categories] = await Promise.all([
+    listApplicationsPage({ status: params.status, category: params.category, q: params.q, page: parsePage(params.page), pageSize: 10 }),
+    listCategories(),
+  ]);
+  return <><PageTitle title="Applications" /><AdminApplicationsBrowser categories={categories} initialPage={page} /></>;
 }

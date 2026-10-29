@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Briefcase, FileText, FolderTree, Globe, LayoutDashboard, ListChecks, User, MessageSquare,
+  Briefcase, Building2, FileText, FolderTree, Globe, LayoutDashboard, ListChecks, User, MessageSquare,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
@@ -15,6 +15,7 @@ const icons = {
   applications: ListChecks,
   jobs: Briefcase,
   categories: FolderTree,
+  companies: Building2,
   site: Globe,
   queries: MessageSquare,
 } satisfies Record<string, LucideIcon>;

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Users } from "lucide-react";
 import JobSearchBar from "./JobSearchBar";
 import { listCategories, listJobs } from "@/modules/jobs/jobs.service";
+import ContactShortcut from "./ContactShortcut";
 
 const popular = ["Plumber", "Car Driver", "Computer Operator", "Office Boy", "Electrician"];
 
@@ -57,6 +58,7 @@ export default async function HeroSection() {
           </div>
         </div>
       </div>
+      <ContactShortcut />
     </section>
   );
 }

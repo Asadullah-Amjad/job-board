@@ -8,6 +8,7 @@ import type { PaginatedItems } from "@/lib/utils/pagination";
 export interface JobFilters {
   q?: string;
   location?: string;
+  locationRegion?: string;
   category?: string;
   type?: string;
   includeClosed?: boolean;
@@ -15,6 +16,7 @@ export interface JobFilters {
 }
 
 export interface JobPageFilters extends JobFilters {
+  admin?: boolean;
   page?: number;
   pageSize?: number;
   sort?: "title" | "created_at";
@@ -50,6 +52,7 @@ export async function listJobs(f: JobFilters = {}): Promise<Job[]> {
   let query = supabase.from("jobs").select("*").order("created_at", { ascending: false });
   if (!f.includeClosed) query = query.eq("status", "open");
   if (f.location) query = query.ilike("location", `%${f.location}%`);
+  if (f.locationRegion) query = query.ilike("location", `%${f.locationRegion}%`);
   if (f.category) query = query.eq("category_slug", f.category);
   if (f.type) query = query.eq("type", f.type);
   if (f.q) query = query.or(`title.ilike.%${f.q}%,company.ilike.%${f.q}%,description.ilike.%${f.q}%`);
@@ -60,7 +63,7 @@ export async function listJobs(f: JobFilters = {}): Promise<Job[]> {
 }
 
 export async function listJobsPage(f: JobPageFilters = {}): Promise<PaginatedItems<Job>> {
-  const supabase = await createSupabaseServerClient();
+  const supabase = f.admin ? createSupabaseAdminClient() : await createSupabaseServerClient();
   const pageSize = f.pageSize ?? 12;
   const requestedPage = f.page ?? 1;
   const start = (Math.max(1, requestedPage) - 1) * pageSize;
@@ -69,6 +72,7 @@ export async function listJobsPage(f: JobPageFilters = {}): Promise<PaginatedIte
   if (!f.includeClosed) query = query.eq("status", "open");
   if (f.status) query = query.eq("status", f.status);
   if (f.location) query = query.ilike("location", `%${f.location}%`);
+  if (f.locationRegion) query = query.ilike("location", `%${f.locationRegion}%`);
   if (f.category) query = query.eq("category_slug", f.category);
   if (f.type) query = query.eq("type", f.type);
   if (f.q) query = query.or(`title.ilike.%${f.q}%,company.ilike.%${f.q}%,description.ilike.%${f.q}%`);
@@ -84,6 +88,7 @@ export async function listJobsPage(f: JobPageFilters = {}): Promise<PaginatedIte
     if (!f.includeClosed) correctedQuery.eq("status", "open");
     if (f.status) correctedQuery.eq("status", f.status);
     if (f.location) correctedQuery.ilike("location", `%${f.location}%`);
+    if (f.locationRegion) correctedQuery.ilike("location", `%${f.locationRegion}%`);
     if (f.category) correctedQuery.eq("category_slug", f.category);
     if (f.type) correctedQuery.eq("type", f.type);
     if (f.q) correctedQuery.or(`title.ilike.%${f.q}%,company.ilike.%${f.q}%,description.ilike.%${f.q}%`);
@@ -227,8 +232,10 @@ export async function updateCategory(slug: string, name: string) {
 
 export async function deleteCategory(slug: string) {
   const supabase = createSupabaseAdminClient();
-  const { count } = await supabase.from("jobs").select("id", { count: "exact", head: true }).eq("category_slug", slug);
+  const { count, error: countError } = await supabase.from("jobs").select("id", { count: "exact", head: true }).eq("category_slug", slug);
+  if (countError) throw new AppError("DATABASE_UNAVAILABLE", "The category could not be deleted. Please try again.", 500, { cause: countError });
   if (count) return false;
   const { error } = await supabase.from("categories").delete().eq("slug", slug);
-  return !error;
+  if (error) throw new AppError("DATABASE_UNAVAILABLE", "The category could not be deleted. Please try again.", 500, { cause: error });
+  return true;
 }

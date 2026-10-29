@@ -2,15 +2,17 @@ import ActionForm from "@/components/ui/ActionForm";
 import { Field, inputClass } from "@/components/ui/Field";
 import { saveJobAction } from "@/actions/jobs.actions";
 import { JOB_TYPES, type Category, type Job } from "@/types/job.types";
+import type { Company } from "@/types/company.types";
+import LocationSelect from "@/components/jobs/LocationSelect";
 
-export default function JobForm({ job, categories }: { job?: Job; categories: Category[] }) {
+export default function JobForm({ job, categories, companies }: { job?: Job; categories: Category[]; companies: Company[] }) {
   return (
     <ActionForm action={saveJobAction} submitLabel={job ? "Save changes" : "Publish job"} fullWidth={false} className="max-w-3xl rounded-lg border border-line bg-white p-6">
       {job && <input type="hidden" name="id" value={job.id} />}
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Job title"><input name="title" required defaultValue={job?.title} className={inputClass} /></Field>
-        <Field label="Company"><input name="company" required defaultValue={job?.company} className={inputClass} /></Field>
-        <Field label="Location"><input name="location" required defaultValue={job?.location} placeholder="Lahore, Pakistan" className={inputClass} /></Field>
+        <Field label="Company"><select name="company" required defaultValue={job?.company ?? companies[0]?.name} className={inputClass}><option value="">Select a company</option>{companies.map((company) => <option key={company.id} value={company.name}>{company.name}</option>)}</select></Field>
+        <Field label="Gulf country or region"><LocationSelect name="location" defaultValue={job?.location} className={inputClass} /></Field>
         <Field label="Category">
           <select name="categorySlug" required defaultValue={job?.categorySlug ?? categories[0]?.slug} className={inputClass}>
             {categories.map((c) => (<option key={c.slug} value={c.slug}>{c.name}</option>))}

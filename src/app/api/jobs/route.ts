@@ -8,6 +8,7 @@ export async function GET(req: Request) {
     const page = await listJobsPage({
       q: p.get("q") ?? undefined,
       location: p.get("location") ?? undefined,
+      locationRegion: p.get("locationRegion") ?? undefined,
       category: p.get("category") ?? undefined,
       type: p.get("type") ?? undefined,
       page: parsePage(p.get("page") ?? undefined),

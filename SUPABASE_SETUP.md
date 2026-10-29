@@ -56,6 +56,29 @@ notify pgrst, 'reload schema';
 
 Until this migration is applied to the connected Supabase project, contact submissions that include a job title and the admin Query Tab will return a safe unavailable message. The migration file in the repository does not change the remote database automatically.
 
+## Companies and Gulf job locations
+
+Run `supabase/migrations/202610290002_companies.sql` in the Supabase SQL Editor. It creates the `public.companies` table and imports distinct company names from existing jobs:
+
+```sql
+create table if not exists public.companies (
+  id uuid primary key default gen_random_uuid(),
+  name text not null unique,
+  created_at timestamptz not null default now()
+);
+
+insert into public.companies (name)
+select distinct trim(company) from public.jobs
+where trim(company) <> ''
+on conflict (name) do nothing;
+
+notify pgrst, 'reload schema';
+```
+
+After applying it, open the admin **Companies** tab to add, edit, or delete companies. A company with jobs cannot be deleted. Editing a company also updates the matching job records, while the existing `jobs.company` text column remains the source used by job search and public company links.
+
+Admin job posting now stores the selected Gulf region directly in the existing `jobs.location` column as `Region, Country`. The homepage and jobs page use the same Gulf country/region selector and filter that existing column; no jobs-table migration is required.
+
 The result must be `public.users`. Then redeploy or restart the application so it uses the same Supabase project and server key.
 
 ## 2. Configure transactional email

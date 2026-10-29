@@ -2,6 +2,7 @@ import Link from "next/link";
 import { inputClass } from "@/components/ui/Field";
 import { buttonClasses } from "@/components/ui/Button";
 import { JOB_TYPES, type Category } from "@/types/job.types";
+import LocationSelect from "./LocationSelect";
 
 export default function JobFilters({
   categories,
@@ -18,8 +19,8 @@ export default function JobFilters({
         <input name="q" defaultValue={values.q} placeholder="Job title, company" className={`${inputClass} mt-1 font-normal`} />
       </label>
       <label className="block text-sm font-medium">
-        Location
-        <input name="location" defaultValue={values.location} placeholder="City" className={`${inputClass} mt-1 font-normal`} />
+        Gulf country or region
+        <LocationSelect defaultValue={values.location} name="locationRegion" className={`${inputClass} mt-1 font-normal`} />
       </label>
       <label className="block text-sm font-medium">
         Category

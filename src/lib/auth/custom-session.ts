@@ -54,7 +54,6 @@ export async function getCustomSessionUserId() {
     .gt("expires_at", new Date().toISOString())
     .maybeSingle();
   if (error || !data) {
-    cookieStore.delete(SESSION_COOKIE);
     return null;
   }
   await supabase

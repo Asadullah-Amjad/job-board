@@ -77,9 +77,15 @@ export async function deleteCategoryAction(fd: FormData): Promise<ActionState> {
   await requireAdmin();
   const slug = str(fd, "slug");
   if (!slug) return { error: "Category is required." };
-  if (!(await deleteCategory(slug))) return { error: "Category could not be deleted because it has jobs." };
-  revalidatePath("/", "layout");
-  return { success: "Category deleted." };
+  try {
+    if (!(await deleteCategory(slug))) return { error: "Category could not be deleted because it has jobs." };
+    revalidatePath("/", "layout");
+    revalidatePath("/admin/categories");
+    revalidatePath("/jobs");
+    return { success: "Category deleted." };
+  } catch (error) {
+    return { error: publicMessage(error, "The category could not be deleted. Please try again."), code: "INTERNAL_ERROR" };
+  }
 }
 
 export async function updateCategoryAction(_: ActionState, fd: FormData): Promise<ActionState> {
